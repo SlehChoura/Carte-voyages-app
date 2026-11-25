@@ -50,6 +50,9 @@ jobs:
         run: |
           mkdir -p build/Payload
           cp -R build/App.xcarchive/Products/Applications/App.app build/Payload/
+          ls -la build/Payload/App.app build/Payload/App.app/public
+          plutil -p build/Payload/App.app/Info.plist | grep -E "NSPhotoLibrary|DisplayName"
+          nm build/Payload/App.app/App | grep -c GaleriePhotos
           cd build && zip -qry NosVoyages.ipa Payload && ls -lh NosVoyages.ipa
 
       - uses: actions/upload-artifact@v4
