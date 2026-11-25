@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nos voyages en famille</title>
+<style>/*LEAFLET_CSS*/</style>
+<style>/*CLUSTER_CSS*/</style>
+<style>
+:root{
+  --bg:#f6f4ef; --panel:#ffffff; --ink:#1f2328; --muted:#6b6f76; --line:#e6e2d9;
+  --accent:#d9480f; --accent-soft:#fff0e6; --visited:#f08c4a; --visited-strong:#d9480f;
+  --chip:#f1eee7; --shadow:0 6px 24px rgba(0,0,0,.12);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16181c; --panel:#1f2227; --ink:#eceae6; --muted:#9aa0a8; --line:#33373e;
+    --accent:#ff8a4c; --accent-soft:#3a2518; --visited:#e07a3c; --visited-strong:#ff8a4c;
+    --chip:#2a2e35; --shadow:0 6px 24px rgba(0,0,0,.5);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+textarea{resize:vertical;min-height:60px}
+#app{display:grid;grid-template-rows:auto auto 1fr;height:100%;height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.01em;flex:1 1 auto;white-space:nowrap}
+header h1 span{color:var(--accent)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn.ghost{border-color:transparent;background:transparent}
+#years{display:flex;gap:6px;overflow-x:auto;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);scrollbar-width:thin;align-items:center}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:5px 12px;font-size:14px}
+.chip b{font-weight:600}
+.chip small{color:var(--muted);margin-left:4px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.on small{color:#ffe3d3}
+#main{display:grid;grid-template-columns:380px 1fr;min-height:0}
+#panel{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+#map{min-height:0;height:100%;background:#aad3df}
+.sec{padding:14px 16px;border-bottom:1px solid var(--line)}
+.sec h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--chip);border-radius:10px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted)}
+.filters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.countries{display:flex;flex-wrap:wrap;gap:6px}
+.country{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:3px 10px;font-size:13px}
+.country.on{border-color:var(--accent);background:var(--accent-soft)}
+.trip{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center}
+.trip:hover{background:var(--chip)}
+.trip img,.trip .noimg{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:0 0 64px;background:var(--chip)}
+.trip .t{font-weight:600}
+.trip .d{font-size:13px;color:var(--muted)}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tag{font-size:12px;background:var(--chip);border-radius:999px;padding:1px 8px}
+.tag.p{background:var(--accent-soft);color:var(--accent)}
+.yearhead{padding:8px 16px;font-weight:700;background:var(--bg);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+.empty{padding:28px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);margin:0 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:4px}
+.grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;background:var(--chip)}
+label.f{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+.people{display:flex;flex-wrap:wrap;gap:6px}
+.person{border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:4px 11px;font-size:14px}
+.person.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.row{display:flex;gap:8px;align-items:center}
+.muted{color:var(--muted);font-size:13px}
+#progress{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel);box-shadow:var(--shadow);border-radius:14px;padding:12px 16px;z-index:2000;width:min(420px,calc(100% - 32px));display:none}
+#progress .bar{height:6px;background:var(--chip);border-radius:3px;overflow:hidden;margin-top:8px}
+#progress .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+#toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:3000;display:none;max-width:calc(100% - 32px)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.card{background:var(--panel);border-radius:16px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:18px 20px;box-shadow:var(--shadow)}
+.card h3{margin:0 0 8px}
+.card ol,.card ul{padding-left:20px}
+.card li{margin:4px 0}
+#lightbox .card{padding:10px;max-width:760px;text-align:center}
+#lightbox img{max-width:100%;max-height:70vh;border-radius:10px}
+.leaflet-container{font:inherit}
+.ph{border-radius:10px;overflow:hidden;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);background:#ddd}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.cl{position:relative}
+.cl .ph{width:100%;height:100%}
+.cl b{position:absolute;right:-8px;top:-8px;background:var(--accent);color:#fff;border-radius:999px;font-size:12px;padding:1px 7px;border:2px solid #fff;font-weight:700}
+.leaflet-tooltip{font:inherit}
+#menu{position:relative}
+#menuList{position:absolute;right:0;top:calc(100% + 6px);background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);z-index:1500;min-width:250px;display:none;padding:6px}
+#menuList.on{display:block}
+#menuList button{display:block;width:100%;text-align:left;background:none;border:0;padding:9px 12px;border-radius:8px}
+#menuList button:hover{background:var(--chip)}
+#menuList hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+#panelToggle{display:none}
+@media (max-width: 800px){
+  #main{grid-template-columns:1fr;grid-template-rows:1fr auto;position:relative}
+  #map{grid-row:1}
+  #panel{grid-row:2;border-right:0;border-top:1px solid var(--line);max-height:48vh;height:48vh;transition:height .2s}
+  #panel.small{height:120px}
+  #panelToggle{display:block;position:sticky;top:0;z-index:3;width:100%;border:0;background:var(--panel);padding:6px 0;border-bottom:1px solid var(--line)}
+  #panelToggle i{display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
+  header h1{font-size:16px}
+  .hide-m{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>🌍 Nos voyages <span>en famille</span></h1>
+    <button class="btn primary" id="addBtn">＋ Ajouter des photos</button>
+    <div id="menu">
+      <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
+      <div id="menuList">
+        <button data-a="folder">📁 Importer un dossier entier</button>
+        <button data-a="backup">💾 Sauvegarder (fichier .json)</button>
+        <button data-a="restore">📂 Restaurer une sauvegarde</button>
+        <hr>
+        <button data-a="home">🏠 Gérer « la maison »</button>
+        <button data-a="settings">⚙️ Réglages des séjours</button>
+        <button data-a="help">❓ Mode d'emploi</button>
+        <hr>
+        <button data-a="demo">✨ Charger un exemple</button>
+        <button data-a="wipe">🗑️ Tout effacer</button>
+      </div>
+    </div>
+  </header>
+  <div id="years"></div>
+  <div id="main">
+    <aside id="panel"><button id="panelToggle" aria-label="Agrandir/réduire"><i></i></button><div id="panelBody"></div></aside>
+    <div id="map"></div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" multiple accept="image/*,.heic,.heif,.json" hidden>
+<input type="file" id="folderInput" webkitdirectory multiple hidden>
+<input type="file" id="restoreInput" accept=".json,application/json" hidden>
+
+<div id="progress"><div id="progressText">Analyse…</div><div class="bar"><i></i></div></div>
+<div id="toast"></div>
+<div class="modal" id="lightbox"><div class="card"><img id="lbImg" alt=""><div id="lbInfo" class="muted" style="margin-top:8px"></div><div class="row" style="justify-content:center;margin-top:8px"><button class="btn small" id="lbPrev">◀</button><button class="btn small" id="lbTrip">Voir le séjour</button><button class="btn small" id="lbCover">⭐ Photo de couverture</button><button class="btn small" id="lbNext">▶</button><button class="btn small" id="lbClose">Fermer</button></div></div></div>
+<div class="modal" id="dialog"><div class="card" id="dialogBody"></div></div>
+
+<script>/*LEAFLET_JS*/</script>
+<script>/*CLUSTER_JS*/</script>
+<script>/*EXIFR_JS*/</script>
+<script>/*TOPO_JS*/</script>
+<script>window.COUNTRIES_TOPO=/*COUNTRIES*/;</script>
+<script>
+"use strict";
+/* ============ Stockage local (IndexedDB) — rien n'est envoyé sur internet ============ */
+const DB_NAME='carte-voyages-famille';
+let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('photos',{keyPath:'id'});d.createObjectStore('kv')};r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function tx(store,mode,fn){if(!db)return Promise.resolve();return new Promise((res,rej)=>{const t=db.transaction(store,mode);const s=t.objectStore(store);let out;Promise.resolve(fn(s)).then(v=>out=v);t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error)})}
+const getAll=s=>new Promise((res,rej)=>{const r=db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const kvGet=k=>new Promise((res,rej)=>{const r=db.transaction('kv').objectStore('kv').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const kvSet=(k,v)=>tx('kv','readwrite',s=>{s.put(v,k)});
+const putPhotos=list=>tx('photos','readwrite',s=>{list.forEach(p=>s.put(p))});
+
+/* ============ État ============ */
+let photos=[];          // {id,name,lat,lng,t,cc,thumb(Blob),trip}
+let notes={};           // tripKey -> {title,acts,people,notes,cover}
+let settings={homes:[],homeRadius:30,gapDays:2,showHome:false};
+let family=[];          // liste des prénoms
+let trips=[];
+const F={year:'all',person:'',country:'',q:''};
+let view={trip:null};
+const urls=new Map();
+/* ============ Application iPhone (galerie Photos) ============ */
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()&&Capacitor.Plugins&&Capacitor.Plugins.GaleriePhotos);
+const Galerie=NATIVE?Capacitor.Plugins.GaleriePhotos:null;
+let thumbBase='';
+const thumbFile=ph=>ph.replace(/\//g,'_')+'.jpg';
+const thumbURL=p=>{if(p.ph&&thumbBase)return thumbBase+encodeURIComponent(thumbFile(p.ph));if(!p.thumb)return '';let u=urls.get(p.id);if(!u){u=URL.createObjectURL(p.thumb);urls.set(p.id,u)}return u};
+
+/* ============ Pays (frontières embarquées, recherche hors-ligne) ============ */
+let countryFeatures=[], countryByCode={};
+function prepCountries(){
+  const topo=window.COUNTRIES_TOPO;
+  const fc=topojson.feature(topo,topo.objects.countries);
+  countryFeatures=fc.features.map(f=>{
+    const polys=f.geometry? (f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates):[];
+    let b=[180,90,-180,-90];
+    polys.forEach(pl=>pl[0].forEach(([x,y])=>{if(x<b[0])b[0]=x;if(y<b[1])b[1]=y;if(x>b[2])b[2]=x;if(y>b[3])b[3]=y}));
+    f.properties.bbox=b;f.properties.polys=polys;return f});
+  countryFeatures.forEach(f=>{if(f.properties.a)countryByCode[f.properties.a]=f});
+}
+function inRing(x,y,r){let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const[xi,yi]=r[i],[xj,yj]=r[j];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))c=!c}return c}
+function countryAt(lat,lng){
+  for(const f of countryFeatures){const b=f.properties.bbox;if(lng<b[0]||lng>b[2]||lat<b[1]||lat>b[3])continue;
+    for(const pl of f.properties.polys){if(inRing(lng,lat,pl[0])&&!pl.slice(1).some(h=>inRing(lng,lat,h)))return f.properties.a}}
+  // hors polygone (plage, bateau, côte) : pays le plus proche à moins de ~60 km
+  let best=null,bd=0.6;
+  for(const f of countryFeatures){const b=f.properties.bbox;if(lng<b[0]-1||lng>b[2]+1||lat<b[1]-1||lat>b[3]+1)continue;
+    for(const pl of f.properties.polys)for(const[x,y]of pl[0]){const d=Math.hypot((x-lng)*Math.cos(lat*Math.PI/180),y-lat);if(d<bd){bd=d;best=f.properties.a}}}
+  return best||'';
+}
+const cName=cc=>countryByCode[cc]?.properties.n||cc||'Pays inconnu';
+const flag=cc=>cc&&cc.length===2?String.fromCodePoint(...[...cc.toUpperCase()].map(c=>127397+c.charCodeAt(0))):'🏳️';
+
+/* ============ Outils ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function km(a,b){const R=6371,r=Math.PI/180;const dl=(b.lat-a.lat)*r,dn=(b.lng-a.lng)*r;const h=Math.sin(dl/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
+const fmtD=t=>new Date(t).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+const fmtM=t=>new Date(t).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+function fmtRange(a,b){const A=new Date(a),B=new Date(b);if(A.toDateString()===B.toDateString())return fmtD(a);
+  if(A.getFullYear()===B.getFullYear()&&A.getMonth()===B.getMonth())return `${A.getDate()}–${B.getDate()} ${A.toLocaleDateString('fr-FR',{month:'short',year:'numeric'})}`;return `${fmtD(a)} → ${fmtD(b)}`}
+let toastT;function toast(m,ms=3500){const e=$('#toast');e.textContent=m;e.style.display='block';clearTimeout(toastT);toastT=setTimeout(()=>e.style.display='none',ms)}
+function progress(done,total,text){const e=$('#progress');if(done==null){e.style.display='none';return}e.style.display='block';$('#progressText').textContent=text;e.querySelector('i').style.width=(total?100*done/total:0)+'%'}
+const yearOf=t=>new Date(t).getFullYear();
+
+/* ============ Séjours : regroupement automatique ============ */
+function nearHome(p){return settings.homes.some(h=>km(h,p)<=(h.r||settings.homeRadius))}
+function computeTrips(){
+  const gap=settings.gapDays*864e5;
+  const pts=photos.filter(p=>!(p.home=nearHome(p))).sort((a,b)=>a.t-b.t);
+  const groups=[];let cur=null,last=null;
+  for(const p of pts){
+    if(!cur||p.t-last.t>gap||(km(p,last)>1500&&p.t-last.t>864e5)){cur=[];groups.push(cur)}
+    cur.push(p);last=p}
+  const used=new Set();
+  trips=groups.map(g=>{
+    // conserver les annotations quand on ajoute des photos : on reprend la clé majoritaire
+    const cnt={};g.forEach(p=>{if(p.trip&&notes[p.trip]&&!used.has(p.trip))cnt[p.trip]=(cnt[p.trip]||0)+1});
+    let key=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||('s_'+g[0].id);
+    used.add(key);g.forEach(p=>p.trip=key);
+    const cc={};g.forEach(p=>{if(p.cc)cc[p.cc]=(cc[p.cc]||0)+1});
+    const lat=g.map(p=>p.lat),lng=g.map(p=>p.lng);
+    return{key,photos:g,start:g[0].t,end:g[g.length-1].t,year:yearOf(g[0].t),
+      countries:Object.keys(cc).sort((a,b)=>cc[b]-cc[a]),
+      bounds:[[Math.min(...lat),Math.min(...lng)],[Math.max(...lat),Math.max(...lng)]]}});
+  photos.filter(p=>p.home).forEach(p=>p.trip=null);
+}
+const N=t=>notes[t.key]||{};
+function tripTitle(t){const n=N(t);if(n.title)return n.title;return `${t.countries.slice(0,3).map(cName).join(', ')||'Voyage'} · ${fmtM(t.start)}`}
+function tripCover(t){const n=N(t);const p=(n.cover&&t.photos.find(p=>p.id===n.cover))||t.photos[Math.floor(t.photos.length/2)];return p}
+function tripPass(t,ignoreYear){
+  if(!ignoreYear&&F.year!=='all'&&t.year!==+F.year&&yearOf(t.end)!==+F.year)return false;
+  const n=N(t);
+  if(F.person&&!(n.people||[]).includes(F.person))return false;
+  if(F.country&&!t.countries.includes(F.country))return false;
+  if(F.q){const q=F.q.toLowerCase();const hay=[tripTitle(t),...(n.acts||[]),n.notes||'',...(n.people||[]),...t.countries.map(cName)].join(' ').toLowerCase();if(!hay.includes(q))return false}
+  return true}
+
+/* ============ Carte ============ */
+let map,countryLayer,cluster,tripBoundsLayer;
+function initMap(){
+  map=L.map('map',{worldCopyJump:true,zoomControl:true,preferCanvas:true}).setView([30,10],2);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'}).addTo(map);
+  countryLayer=L.geoJSON({type:'FeatureCollection',features:countryFeatures},{style:()=>({stroke:false,fillOpacity:0}),
+    onEachFeature:(f,l)=>{l.on('click',e=>{const a=f.properties.a;if(!visitedNow.has(a))return;F.country=F.country===a?'':a;view.trip=null;refresh();L.DomEvent.stop(e)});
+      l.on('mouseover',()=>{if(visitedNow.has(f.properties.a))l.bindTooltip(`${flag(f.properties.a)} ${esc(f.properties.n)} · ${visitedNow.get(f.properties.a)} séjour(s)`,{sticky:true}).openTooltip()})}}).addTo(map);
+  cluster=L.markerClusterGroup({maxClusterRadius:56,showCoverageOnHover:false,spiderfyOnMaxZoom:true,chunkedLoading:true,
+    iconCreateFunction:c=>{const ms=c.getAllChildMarkers();const p=ms[0].options.p;const n=c.getChildCount();const s=n>50?60:n>10?54:48;
+      return L.divIcon({className:'cl',html:`<div class="ph"><img src="${thumbURL(p)}" alt=""></div><b>${n}</b>`,iconSize:[s,s]})}});
+  map.addLayer(cluster);
+  tripBoundsLayer=L.layerGroup().addTo(map);
+}
+let visitedNow=new Map();
+function drawMap(fit){
+  const vt=trips.filter(t=>tripPass(t));
+  visitedNow=new Map();vt.forEach(t=>t.countries.forEach(c=>visitedNow.set(c,(visitedNow.get(c)||0)+1)));
+  const max=Math.max(1,...visitedNow.values());
+  countryLayer.setStyle(f=>{const v=visitedNow.get(f.properties.a);if(!v)return{stroke:false,fillOpacity:0};
+    const on=F.country===f.properties.a;
+    return{stroke:true,color:on?getCss('--visited-strong'):getCss('--visited'),weight:on?2.5:1,fillColor:getCss('--visited'),fillOpacity:on?.5:.22+.25*(v/max)}});
+  cluster.clearLayers();tripBoundsLayer.clearLayers();
+  let list=view.trip?view.trip.photos:vt.flatMap(t=>t.photos);
+  if(settings.showHome&&!view.trip)list=list.concat(photos.filter(p=>p.home&&(F.year==='all'||yearOf(p.t)===+F.year)&&!F.country&&!F.person&&!F.q));
+  const ms=list.map(p=>L.marker([p.lat,p.lng],{p,icon:L.divIcon({className:'ph',html:`<img src="${thumbURL(p)}" alt="" loading="lazy">`,iconSize:[42,42]})}).on('click',()=>openLightbox(p,list)));
+  cluster.addLayers(ms);
+  if(view.trip){const b=view.trip.bounds;L.rectangle(b,{color:getCss('--accent'),weight:1.5,fill:false,dashArray:'5 5'}).addTo(tripBoundsLayer)}
+  if(fit&&list.length){const b=L.latLngBounds(list.map(p=>[p.lat,p.lng]));map.flyToBounds(b.pad(.25),{maxZoom:view.trip?13:6,duration:.8})}
+}
+const getCss=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ============ Panneau ============ */
+function renderYears(){
+  const years={};trips.forEach(t=>{if(tripPass(t,true))years[t.year]=(years[t.year]||0)+1});
+  const ys=Object.keys(years).sort();
+  let h=`<button class="chip ${F.year==='all'?'on':''}" data-y="all"><b>Toutes les années</b></button>`;
+  h+=ys.map(y=>`<button class="chip ${F.year===y?'on':''}" data-y="${y}"><b>${y}</b><small>${years[y]}</small></button>`).join('');
+  if(ys.length>1)h+=`<button class="chip" id="playBtn" title="Faire défiler les années">${playing?'⏸ Pause':'▶ Défiler'}</button>`;
+  $('#years').innerHTML=h;
+  $('#years').querySelectorAll('[data-y]').forEach(b=>b.onclick=()=>{stopPlay();F.year=b.dataset.y;view.trip=null;refresh(true)});
+  const pb=$('#playBtn');if(pb)pb.onclick=()=>playing?stopPlay():startPlay(ys);
+  const on=$('#years .chip.on');if(on)on.scrollIntoView({inline:'nearest',block:'nearest'});
+}
+let playing=null;
+function startPlay(ys){let i=Math.max(0,ys.indexOf(F.year));const step=()=>{F.year=ys[i%ys.length];view.trip=null;refresh(true);i++};playing=setInterval(step,2800);step();renderYears()}
+function stopPlay(){if(playing){clearInterval(playing);playing=null;renderYears()}}
+
+function renderPanel(){
+  const el=$('#panelBody');
+  if(!photos.length){el.innerHTML=`<div class="empty"><h3>Bienvenue 👋</h3><p>Ajoutez les photos de votre téléphone : l'application lit la <b>position</b> et la <b>date</b> de chaque photo pour retrouver vos voyages et les placer sur la carte.</p><p>Vos photos restent sur cet appareil, rien n'est envoyé sur internet.</p><p><button class="btn primary" onclick="$('#fileInput').click()">＋ Ajouter des photos</button></p><p><button class="btn" onclick="showHelp()">Comment faire depuis mon téléphone ?</button></p><p><button class="btn small ghost" onclick="loadDemo()">✨ Voir un exemple</button></p></div>`;return}
+  if(view.trip)return renderTrip(el,view.trip);
+  const vt=trips.filter(t=>tripPass(t));
+  const ccs=new Map();vt.forEach(t=>t.countries.forEach(c=>ccs.set(c,(ccs.get(c)||0)+1)));
+  const nPh=vt.reduce((s,t)=>s+t.photos.length,0);
+  const allCountries=new Map();trips.filter(t=>tripPass(t,true)||true).forEach(t=>t.countries.forEach(c=>allCountries.set(c,1)));
+  let h=`<div class="sec"><div class="stats"><div class="stat"><b>${ccs.size}</b><span>pays</span></div><div class="stat"><b>${vt.length}</b><span>séjours</span></div><div class="stat"><b>${nPh}</b><span>photos</span></div></div>
+  <div class="filters"><select id="fPerson"><option value="">👨‍👩‍👧 Tout le monde</option>${family.map(p=>`<option ${F.person===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
+  <input id="fQ" placeholder="🔎 Rechercher (plage, ski…)" value="${esc(F.q)}"></div></div>`;
+  if(ccs.size){h+=`<div class="sec"><h2>Pays visités ${F.year!=='all'?'en '+F.year:''}</h2><div class="countries">${[...ccs].sort((a,b)=>cName(a[0]).localeCompare(cName(b[0]),'fr')).map(([c,n])=>`<button class="country ${F.country===c?'on':''}" data-c="${c}">${flag(c)} ${esc(cName(c))} <small class="muted">${n}</small></button>`).join('')}</div>${F.country?`<div style="margin-top:8px"><button class="btn small" data-c="">✕ Tous les pays</button></div>`:''}</div>`}
+  if(!vt.length)h+=`<div class="empty">Aucun séjour ne correspond à ces filtres.</div>`;
+  let lastY=null;
+  vt.slice().sort((a,b)=>b.start-a.start).forEach(t=>{
+    if(t.year!==lastY){h+=`<div class="yearhead">${t.year}</div>`;lastY=t.year}
+    const n=N(t),c=tripCover(t);
+    h+=`<div class="trip" data-k="${esc(t.key)}"><img src="${thumbURL(c)}" alt="" loading="lazy"><div style="min-width:0"><div class="t">${esc(tripTitle(t))}</div><div class="d">${t.countries.map(flag).join(' ')} ${fmtRange(t.start,t.end)} · ${t.photos.length} photo${t.photos.length>1?'s':''}</div>
+      <div class="tags">${(n.people||[]).map(p=>`<span class="tag p">${esc(p)}</span>`).join('')}${(n.acts||[]).map(a=>`<span class="tag">${esc(a)}</span>`).join('')}</div></div></div>`});
+  const homeN=photos.filter(p=>p.home).length;
+  h+=`<div class="sec muted">${photos.length} photos géolocalisées${homeN?` dont ${homeN} prises à la maison (non comptées comme voyages${settings.homes.length?'':''}). <label class="row" style="margin-top:6px;color:var(--ink)"><input type="checkbox" id="showHome" style="width:auto" ${settings.showHome?'checked':''}> Afficher aussi les photos de la maison</label>`:'.'}</div>`;
+  el.innerHTML=h;
+  el.querySelectorAll('.trip').forEach(d=>d.onclick=()=>openTrip(d.dataset.k));
+  el.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{F.country=F.country===b.dataset.c?'':b.dataset.c;refresh(true)});
+  $('#fPerson').onchange=e=>{F.person=e.target.value;refresh(true)};
+  let qt;$('#fQ').oninput=e=>{clearTimeout(qt);qt=setTimeout(()=>{F.q=e.target.value;const pos=e.target.selectionStart;refresh();const q=$('#fQ');q.focus();q.setSelectionRange(pos,pos)},300)};
+  const sh=$('#showHome');if(sh)sh.onchange=e=>{settings.showHome=e.target.checked;kvSet('settings',settings);drawMap()};
+}
+function openTrip(k){view.trip=trips.find(t=>t.key===k)||null;$('#panel').classList.remove('small');refresh(true);$('#panel').scrollTop=0}
+function renderTrip(el,t){
+  const n=N(t);
+  el.innerHTML=`<div class="sec"><div class="row" style="justify-content:space-between"><button class="btn small" id="back">← Tous les séjours</button><button class="btn small" id="zoom">🔍 Zoomer</button></div>
+   <h2 style="margin-top:14px">${t.countries.map(c=>flag(c)+' '+esc(cName(c))).join(' · ')}</h2>
+   <div class="muted">${fmtRange(t.start,t.end)} · ${t.photos.length} photos</div>
+   <label class="f">Nom du séjour</label><input id="eTitle" placeholder="${esc(tripTitle({...t,key:'__'}))}" value="${esc(n.title||'')}">
+   <label class="f">Avec qui ?</label><div class="people" id="ePeople">${family.map(p=>`<button class="person ${(n.people||[]).includes(p)?'on':''}" data-p="${esc(p)}">${esc(p)}</button>`).join('')}<button class="person" id="addPerson">＋ Ajouter</button></div>
+   <label class="f">Programme / activités (séparées par des virgules)</label><input id="eActs" placeholder="plage, randonnée, musée, restaurant…" value="${esc((n.acts||[]).join(', '))}">
+   <label class="f">Souvenirs, notes</label><textarea id="eNotes" placeholder="Ce qu'on a aimé, anecdotes…">${esc(n.notes||'')}</textarea>
+   <div class="muted" style="margin-top:6px">Enregistré automatiquement.</div></div>
+   <div class="sec"><h2>Photos</h2><div class="grid">${t.photos.map(p=>`<img src="${thumbURL(p)}" data-id="${esc(p.id)}" loading="lazy" alt="">`).join('')}</div></div>`;
+  const save=()=>{const m=notes[t.key]||(notes[t.key]={});m.title=$('#eTitle').value.trim();m.acts=$('#eActs').value.split(',').map(s=>s.trim()).filter(Boolean);m.notes=$('#eNotes').value;
+    m.people=[...el.querySelectorAll('.person.on')].map(b=>b.dataset.p);kvSet('notes',notes);renderYears()};
+  ['#eTitle','#eActs','#eNotes'].forEach(s=>$(s).addEventListener('input',save));
+  el.querySelectorAll('.person[data-p]').forEach(b=>b.onclick=()=>{b.classList.toggle('on');save()});
+  $('#addPerson').onclick=()=>askText('Ajouter une personne','Prénom (ex. Maman, Lina, Papi…)',name=>{name=name.trim();if(!name)return;if(!family.includes(name)){family.push(name);kvSet('family',family)}
+    const m=notes[t.key]||(notes[t.key]={});m.people=[...new Set([...(m.people||[]),name])];kvSet('notes',notes);renderPanel()});
+  $('#back').onclick=()=>{view.trip=null;refresh(true)};
+  $('#zoom').onclick=()=>drawMap(true);
+  el.querySelectorAll('.grid img').forEach(i=>i.onclick=()=>{const p=t.photos.find(x=>x.id===i.dataset.id);openLightbox(p,t.photos);map.flyTo([p.lat,p.lng],Math.max(map.getZoom(),13))});
+}
+function refresh(fit){renderYears();renderPanel();drawMap(fit)}
+
+/* ============ Visionneuse ============ */
+let lb={list:[],i:0};
+function openLightbox(p,list){lb.list=list;lb.i=Math.max(0,list.indexOf(p));showLb();$('#lightbox').classList.add('on')}
+function showLb(){const p=lb.list[lb.i];$('#lbImg').src=thumbURL(p);if(NATIVE&&p.ph){const want=p.id;Galerie.getImage({id:p.ph,size:1600}).then(r=>{if(lb.list[lb.i]&&lb.list[lb.i].id===want)$('#lbImg').src=Capacitor.convertFileSrc(r.path)+'?'+Date.now()}).catch(()=>{})}const t=trips.find(t=>t.key===p.trip);
+  $('#lbInfo').innerHTML=`${flag(p.cc)} ${esc(cName(p.cc))} · ${new Date(p.t).toLocaleString('fr-FR',{dateStyle:'long',timeStyle:'short'})}${t?' · '+esc(tripTitle(t)):''}<br><small>${esc(p.name)}</small>`;
+  $('#lbTrip').style.display=t&&view.trip!==t?'':'none';$('#lbCover').style.display=t?'':'none'}
+$('#lbClose').onclick=()=>$('#lightbox').classList.remove('on');
+$('#lightbox').onclick=e=>{if(e.target.id==='lightbox')$('#lightbox').classList.remove('on')};
+$('#lbPrev').onclick=()=>{lb.i=(lb.i-1+lb.list.length)%lb.list.length;showLb()};
+$('#lbNext').onclick=()=>{lb.i=(lb.i+1)%lb.list.length;showLb()};
+$('#lbTrip').onclick=()=>{const p=lb.list[lb.i];$('#lightbox').classList.remove('on');openTrip(p.trip)};
+$('#lbCover').onclick=()=>{const p=lb.list[lb.i];(notes[p.trip]||(notes[p.trip]={})).cover=p.id;kvSet('notes',notes);toast('Photo de couverture choisie ⭐');renderPanel()};
+document.addEventListener('keydown',e=>{if(!$('#lightbox').classList.contains('on'))return;if(e.key==='Escape')$('#lbClose').click();if(e.key==='ArrowLeft')$('#lbPrev').click();if(e.key==='ArrowRight')$('#lbNext').click()});
+
+/* ============ Import des photos ============ */
+async function makeThumb(file){
+  const MAX=512;
+  try{const bmp=await createImageBitmap(file);const s=Math.min(1,MAX/Math.max(bmp.width,bmp.height));
+    const c=document.createElement('canvas');c.width=Math.round(bmp.width*s);c.height=Math.round(bmp.height*s);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);bmp.close&&bmp.close();
+    return await new Promise(r=>c.toBlob(r,'image/jpeg',.78))}catch(e){}
+  try{const u8=await exifr.thumbnail(file);if(u8)return new Blob([u8],{type:'image/jpeg'})}catch(e){}
+  return null}
+function parseExifDate(v){if(!v)return null;if(v instanceof Date&&!isNaN(v))return v.getTime();const m=String(v).match(/(\d{4})[:\-](\d\d)[:\-](\d\d)[ T](\d\d):(\d\d):?(\d\d)?/);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)).getTime():null}
+async function importFiles(fileList){
+  const all=[...fileList];
+  // Google Takeout : fichiers .json à côté des photos (position + date)
+  const side={};
+  for(const f of all.filter(f=>/\.json$/i.test(f.name))){try{const j=JSON.parse(await f.text());if(j&&j.title){side[j.title]=j}}catch(e){}}
+  const imgs=all.filter(f=>/^image\//.test(f.type)||/\.(jpe?g|heic|heif|png|webp|tiff?|dng)$/i.test(f.name));
+  if(!imgs.length){toast('Aucune photo trouvée dans la sélection.');return}
+  const known=new Set(photos.map(p=>p.id));
+  let done=0,added=[],noGps=0,dup=0;
+  const queue=imgs.slice();
+  async function worker(){
+    while(queue.length){const f=queue.shift();
+      try{
+        const id=f.name+'|'+f.size;
+        if(known.has(id)){dup++;continue}
+        let lat,lng,t;
+        try{const ex=await exifr.parse(f,{gps:true,tiff:true,exif:true,xmp:false,icc:false,iptc:false,jfif:false,ihdr:false,pick:['DateTimeOriginal','CreateDate','ModifyDate','GPSLatitude','GPSLongitude','GPSLatitudeRef','GPSLongitudeRef','latitude','longitude']});
+          if(ex){lat=ex.latitude;lng=ex.longitude;t=parseExifDate(ex.DateTimeOriginal||ex.CreateDate||ex.ModifyDate)}}catch(e){}
+        const sc=side[f.name];
+        if(sc){const g=(sc.geoData&&sc.geoData.latitude)?sc.geoData:sc.geoDataExif;if((!lat||!lng)&&g&&(g.latitude||g.longitude)){lat=g.latitude;lng=g.longitude}
+          if(!t&&sc.photoTakenTime)t=+sc.photoTakenTime.timestamp*1000}
+        if(!t)t=f.lastModified;
+        if(typeof lat!=='number'||typeof lng!=='number'||isNaN(lat)||(lat===0&&lng===0)){noGps++;continue}
+        known.add(id);
+        const thumb=await makeThumb(f);
+        added.push({id,name:f.name,lat,lng,t,cc:countryAt(lat,lng),thumb,trip:null});
+        if(added.length>=40){const chunk=added.splice(0);await putPhotos(chunk);photos.push(...chunk)}
+      }catch(e){console.warn(f.name,e)}
+      finally{done++;if(done%5===0||done===imgs.length)progress(done,imgs.length,`Analyse des photos… ${done} / ${imgs.length}`)}
+    }}
+  progress(0,imgs.length,`Analyse des photos… 0 / ${imgs.length}`);
+  await Promise.all([worker(),worker(),worker(),worker()]);
+  if(added.length){await putPhotos(added);photos.push(...added)}
+  progress(null);
+  const newCount=photos.length;
+  if(!settings.homes.length&&photos.length>=20)autoHome();
+  computeTrips();await savePhotoTrips();
+  refresh(true);
+  let msg=`${imgs.length-noGps-dup} photo(s) ajoutée(s).`;
+  if(noGps)msg+=` ${noGps} sans position GPS (ignorées).`;
+  if(dup)msg+=` ${dup} déjà présente(s).`;
+  toast(msg,7000);
+  if(noGps&&noGps>imgs.length*0.8)setTimeout(()=>showDialog(`<h3>📍 Peu de positions trouvées</h3><p>${noGps} photo(s) sur ${imgs.length} n'ont pas de position GPS. Souvent, c'est le téléphone qui retire la position quand on choisit les photos depuis la galerie.</p><p>Voir le <a href="#" onclick="showHelp();return false">mode d'emploi</a> pour importer les photos avec leur position (depuis un ordinateur, c'est le plus fiable).</p><p><button class="btn" onclick="closeDialog()">OK</button></p>`),800);
+}
+async function savePhotoTrips(){await putPhotos(photos)}
+async function importGallery(){
+  let st=(await Galerie.requestAccess()).status;
+  if(st==='denied'||st==='restricted'){showDialog(`<h3>📷 Accès aux photos refusé</h3><p>Pour lire votre galerie, autorisez l'accès dans <b>Réglages › Nos voyages › Photos › Accès complet</b>.</p><div class="row" style="justify-content:flex-end"><button class="btn" onclick="closeDialog()">Annuler</button><button class="btn primary" id="goSet">Ouvrir les Réglages</button></div>`);$('#goSet').onclick=()=>{closeDialog();Galerie.openSettings()};return}
+  if(st==='limited')toast('Accès limité : seules les photos choisies seront lues. Pour tout lire : Réglages › Nos voyages › Photos › Accès complet.',9000);
+  progress(0,1,'Lecture de la galerie…');
+  let res;try{res=await Galerie.listPhotos()}catch(e){progress(null);toast('Lecture de la galerie impossible : '+(e.message||e));return}
+  const known=new Set(photos.map(p=>p.id));
+  const fresh=res.photos.filter(x=>!known.has('ph:'+x.id));
+  if(!fresh.length){progress(null);toast(`Rien de nouveau : ${res.total} photos dans la galerie, ${res.total-res.noLocation} avec un lieu, toutes déjà sur la carte.`,7000);return}
+  const fmt=new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short'});
+  let done=0;const B=24;
+  for(let i=0;i<fresh.length;i+=B){
+    const chunk=fresh.slice(i,i+B);
+    try{await Galerie.makeThumbs({ids:chunk.map(x=>x.id),size:320})}catch(e){}
+    const add=chunk.map(x=>({id:'ph:'+x.id,ph:x.id,name:'Photo du '+fmt.format(new Date(x.t)),lat:x.lat,lng:x.lng,t:x.t,cc:countryAt(x.lat,x.lng),thumb:null,trip:null}));
+    await putPhotos(add);photos.push(...add);done+=chunk.length;
+    progress(done,fresh.length,`Préparation des miniatures… ${done} / ${fresh.length}`);
+  }
+  progress(null);
+  if(!settings.homes.length&&photos.length>=20)autoHome();
+  computeTrips();await savePhotoTrips();refresh(true);
+  toast(`${fresh.length} photo(s) ajoutée(s) depuis la galerie. ${res.noLocation} photo(s) sans lieu ignorée(s).`,8000);
+}
+function autoHome(){
+  // le lieu où l'on a pris le plus de photos (cellule ~10 km) = la maison
+  const cells={};photos.forEach(p=>{const k=Math.round(p.lat*10)+','+Math.round(p.lng*10);(cells[k]=cells[k]||[]).push(p)});
+  const best=Object.values(cells).sort((a,b)=>b.length-a.length)[0];
+  if(best&&best.length>=photos.length*0.15){const lat=best.reduce((s,p)=>s+p.lat,0)/best.length,lng=best.reduce((s,p)=>s+p.lng,0)/best.length;
+    settings.homes=[{lat,lng,r:settings.homeRadius}];kvSet('settings',settings);
+    toast('🏠 Maison détectée automatiquement (modifiable dans le menu).',6000)}
+}
+
+/* ============ Maison, réglages ============ */
+function showDialog(html){$('#dialogBody').innerHTML=html;$('#dialog').classList.add('on')}
+function closeDialog(){$('#dialog').classList.remove('on')}
+$('#dialog').onclick=e=>{if(e.target.id==='dialog')closeDialog()};
+function askText(title,ph,cb){showDialog(`<h3>${esc(title)}</h3><input id="askIn" placeholder="${esc(ph)}"><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" onclick="closeDialog()">Annuler</button><button class="btn primary" id="askOk">OK</button></div>`);
+  const i=$('#askIn');i.focus();const ok=()=>{closeDialog();cb(i.value)};$('#askOk').onclick=ok;i.onkeydown=e=>{if(e.key==='Enter')ok()}}
+function showHome(){
+  const hs=settings.homes;
+  showDialog(`<h3>🏠 La maison</h3><p class="muted">Les photos prises près de la maison ne sont pas comptées comme des voyages. Vous pouvez avoir plusieurs maisons (déménagement, maison de vacances des grands-parents…).</p>
+  ${hs.length?hs.map((h,i)=>`<div class="row" style="margin:6px 0"><span style="flex:1">${flag(countryAt(h.lat,h.lng))} ${h.lat.toFixed(3)}, ${h.lng.toFixed(3)} · rayon <input type="number" min="1" max="300" value="${h.r||settings.homeRadius}" data-r="${i}" style="width:70px;display:inline-block"> km</span><button class="btn small" data-del="${i}">Supprimer</button></div>`).join(''):'<p>Aucune maison définie : toutes les photos comptent comme voyages.</p>'}
+  <div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="btn" id="hCenter">📍 Ajouter le centre de la carte comme maison</button></div>
+  <p class="muted">Astuce : zoomez la carte sur votre ville, puis cliquez sur le bouton ci-dessus.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn primary" id="hOk">Terminé</button></div>`);
+  $('#dialogBody').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{hs.splice(+b.dataset.del,1);showHome()});
+  $('#dialogBody').querySelectorAll('[data-r]').forEach(i=>i.onchange=()=>{hs[+i.dataset.r].r=Math.max(1,+i.value||30)});
+  $('#hCenter').onclick=()=>{const c=map.getCenter();hs.push({lat:c.lat,lng:c.lng,r:settings.homeRadius});showHome()};
+  $('#hOk').onclick=async()=>{closeDialog();await kvSet('settings',settings);computeTrips();await savePhotoTrips();refresh(true)};
+}
+function showSettings(){
+  showDialog(`<h3>⚙️ Regroupement des séjours</h3><p class="muted">Les photos prises hors de la maison sont regroupées en séjours. Un nouveau séjour commence quand il n'y a pas de photo pendant :</p>
+  <div class="row"><input type="number" id="sGap" min="1" max="30" value="${settings.gapDays}" style="width:90px"> jours</div>
+  <p class="muted">Augmentez si un même voyage est coupé en plusieurs morceaux, diminuez si deux voyages sont fusionnés.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" onclick="closeDialog()">Annuler</button><button class="btn primary" id="sOk">Appliquer</button></div>`);
+  $('#sOk').onclick=async()=>{settings.gapDays=Math.max(1,+$('#sGap').value||2);closeDialog();await kvSet('settings',settings);computeTrips();await savePhotoTrips();view.trip=null;refresh(true)};
+}
+function showHelp(){showDialog(`<h3>❓ Mode d'emploi</h3>
+<p><b>Le principe :</b> chaque photo prise avec un téléphone contient en général sa <b>date</b> et sa <b>position GPS</b>. L'application les lit, regroupe les photos en séjours, colore les pays visités et vous laisse noter le programme et qui était là. Tout reste sur votre appareil.</p>
+<h4>Le plus simple et le plus fiable : depuis un ordinateur</h4>
+<ol><li><b>iPhone :</b> branchez-le à l'ordinateur. Sur Windows, ouvrez « Ce PC › Apple iPhone › DCIM » et copiez les dossiers. Sur Mac, ouvrez l'app Photos, sélectionnez tout puis <i>Fichier › Exporter › Exporter l'original non modifié</i>.</li>
+<li><b>Android :</b> branchez-le, choisissez « Transfert de fichiers », copiez le dossier <i>DCIM/Camera</i>.</li>
+<li><b>Google Photos :</b> sur takeout.google.com, exportez « Google Photos ». Décompressez, puis importez le dossier entier : les fichiers .json fournis par Google sont lus aussi.</li>
+<li>Ouvrez ce fichier dans Chrome, Edge ou Firefox, puis <b>☰ › Importer un dossier entier</b>.</li></ol>
+<h4>Directement sur le téléphone</h4>
+<p>Le bouton « Ajouter des photos » fonctionne, mais <b>iPhone et Android retirent souvent la position</b> des photos choisies dans la galerie. Sur iPhone, choisissez plutôt <i>Parcourir</i> (app Fichiers) avec des photos enregistrées via <i>Partager › Options › Toutes les données de photos</i>.</p>
+<h4>Passer de l'ordinateur au téléphone</h4>
+<p>Une fois la carte faite sur l'ordinateur : <b>☰ › Sauvegarder</b> crée un fichier .json (miniatures et annotations comprises). Ouvrez l'application sur le téléphone puis <b>☰ › Restaurer une sauvegarde</b>.</p>
+<h4>Utilisation</h4>
+<ul><li>Cliquez sur une <b>année</b> en haut, ou sur « ▶ Défiler » pour revivre les voyages année par année.</li>
+<li>Cliquez sur un <b>pays coloré</b> pour voir les séjours dans ce pays.</li>
+<li>Cliquez sur un <b>séjour</b> pour le nommer, cocher qui était là et noter le programme.</li>
+<li>Zoomez sur la carte : les groupes de photos s'ouvrent jusqu'à chaque photo.</li></ul>
+<p class="muted">Les données sont gardées dans ce navigateur. Pensez à faire une sauvegarde de temps en temps.</p>
+<div class="row" style="justify-content:flex-end"><button class="btn primary" onclick="closeDialog()">Compris</button></div>`)}
+
+/* ============ Sauvegarde / restauration ============ */
+const blobToB64=b=>new Promise(r=>{if(!b)return r(null);const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+const b64ToBlob=async s=>s?(await fetch(s)).blob():null;
+async function backup(){
+  progress(0,photos.length,'Préparation de la sauvegarde…');
+  const ph=[];for(let i=0;i<photos.length;i++){const p=photos[i];ph.push({id:p.id,name:p.name,lat:p.lat,lng:p.lng,t:p.t,trip:p.trip,ph:p.ph,thumb:await blobToB64(p.thumb||(p.ph?await fetch(thumbURL(p)).then(r=>r.ok?r.blob():null).catch(()=>null):null))});if(i%50===0)progress(i,photos.length,'Préparation de la sauvegarde…')}
+  progress(null);
+  const data={app:'carte-voyages-famille',version:1,date:new Date().toISOString(),settings,family,notes,photos:ph};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:'application/json'}));
+  a.download=`voyages-famille-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();
+  toast('Sauvegarde téléchargée 💾')}
+async function restore(file){
+  let d;try{d=JSON.parse(await file.text())}catch(e){toast('Ce fichier n\'est pas une sauvegarde valide.');return}
+  if(d.app!=='carte-voyages-famille'){toast('Ce fichier n\'est pas une sauvegarde de cette application.');return}
+  progress(0,d.photos.length,'Restauration…');
+  const known=new Set(photos.map(p=>p.id));const add=[];
+  for(let i=0;i<d.photos.length;i++){const p=d.photos[i];if(known.has(p.id))continue;add.push({...p,cc:countryAt(p.lat,p.lng),thumb:await b64ToBlob(p.thumb)});if(i%50===0)progress(i,d.photos.length,'Restauration…')}
+  await putPhotos(add);photos.push(...add);
+  notes={...d.notes,...notes};family=[...new Set([...family,...(d.family||[])])];
+  if(!settings.homes.length&&d.settings)settings={...settings,...d.settings};
+  await kvSet('notes',notes);await kvSet('family',family);await kvSet('settings',settings);
+  progress(null);computeTrips();await savePhotoTrips();refresh(true);toast(`${add.length} photo(s) restaurée(s) ✅`)}
+async function wipe(){showDialog(`<h3>🗑️ Tout effacer ?</h3><p>Les photos importées, les séjours, les annotations et les réglages seront supprimés de ce navigateur. Vos photos originales ne sont pas touchées.</p><div class="row" style="justify-content:flex-end"><button class="btn" onclick="closeDialog()">Annuler</button><button class="btn primary" id="wOk">Tout effacer</button></div>`);
+  $('#wOk').onclick=async()=>{closeDialog();await tx('photos','readwrite',s=>s.clear());await tx('kv','readwrite',s=>s.clear());urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();
+    photos=[];notes={};family=[];settings={homes:[],homeRadius:30,gapDays:2,showHome:false};Object.assign(F,{year:'all',person:'',country:'',q:''});view.trip=null;computeTrips();refresh();map.setView([30,10],2)}}
+
+/* ============ Exemple ============ */
+async function loadDemo(){
+  const palette=['#f4a261','#2a9d8f','#e76f51','#264653','#e9c46a','#8ab17d','#6d597a','#457b9d'];
+  const spots=[
+    {y:2019,m:7,d:8,days:10,city:'Marrakech',lat:31.63,lng:-7.99,n:14,emoji:'🐪',title:'Marrakech chez tata',people:['Maman','Papa','Lina','Adam'],acts:['souk','piscine','désert d\'Agafay']},
+    {y:2019,m:11,d:22,days:4,city:'Londres',lat:51.507,lng:-0.127,n:8,emoji:'🎡',title:'',people:['Papa','Lina'],acts:[]},
+    {y:2021,m:1,d:12,days:7,city:'Chamonix',lat:45.92,lng:6.87,n:10,emoji:'⛷️',title:'Ski à Chamonix',people:['Maman','Papa','Lina','Adam'],acts:['ski','luge','fondue']},
+    {y:2021,m:6,d:5,days:12,city:'Djerba',lat:33.81,lng:10.85,n:12,emoji:'🏖️',title:'Djerba en famille',people:['Maman','Papa','Lina','Adam','Mamie'],acts:['plage','marché d\'Houmt Souk']},
+    {y:2022,m:3,d:16,days:5,city:'Rome',lat:41.9,lng:12.49,n:9,emoji:'🏛️',title:'',people:[],acts:[]},
+    {y:2023,m:7,d:1,days:14,city:'Barcelone → Valence',lat:41.39,lng:2.17,n:16,emoji:'🥘',lat2:39.47,lng2:-0.38,title:'Road trip en Espagne',people:['Maman','Papa','Lina','Adam'],acts:['Sagrada Família','paella','plage']},
+    {y:2024,m:3,d:20,days:6,city:'Istanbul',lat:41.01,lng:28.98,n:9,emoji:'🕌',title:'Istanbul',people:['Maman','Papa','Adam'],acts:['Bosphore en bateau','grand bazar']},
+    {y:2024,m:7,d:28,days:9,city:'New York',lat:40.73,lng:-73.99,n:11,emoji:'🗽',title:'New York !',people:['Maman','Papa','Lina','Adam'],acts:['Central Park','statue de la Liberté']},
+    {y:2025,m:9,d:24,days:6,city:'Tokyo',lat:35.68,lng:139.69,n:10,emoji:'🍣',title:'',people:[],acts:[]}];
+  const home={lat:48.86,lng:2.35};
+  const mk=async(txt,color)=>{const c=document.createElement('canvas');c.width=c.height=320;const g=c.getContext('2d');const gr=g.createLinearGradient(0,0,320,320);gr.addColorStop(0,color);gr.addColorStop(1,'#222');g.fillStyle=gr;g.fillRect(0,0,320,320);g.font='120px serif';g.textAlign='center';g.fillText(txt,160,190);return new Promise(r=>c.toBlob(r,'image/jpeg',.8))};
+  const add=[];let k=0;
+  for(const [si,s] of spots.entries()){for(let i=0;i<s.n;i++){const f=i/(s.n-1||1);
+    const lat=(s.lat2?s.lat+(s.lat2-s.lat)*f:s.lat)+(Math.random()-.5)*.08,lng=(s.lng2?s.lng+(s.lng2-s.lng)*f:s.lng)+(Math.random()-.5)*.08;
+    const t=new Date(s.y,s.m-1,s.d).getTime()+f*s.days*864e5+Math.random()*3e7;
+    add.push({id:'demo_'+(k++),name:`IMG_${1000+k}.jpg (${s.city})`,lat,lng,t,cc:countryAt(lat,lng),thumb:await mk(s.emoji,palette[si%palette.length]),trip:null})}}
+  for(let i=0;i<30;i++){add.push({id:'demo_'+(k++),name:`IMG_${1000+k}.jpg (maison)`,lat:home.lat+(Math.random()-.5)*.1,lng:home.lng+(Math.random()-.5)*.1,t:new Date(2019+i%7,i%12,1+i).getTime(),cc:'FR',thumb:await mk('🏠','#999'),trip:null})}
+  await putPhotos(add);photos.push(...add);
+  settings.homes=[{lat:home.lat,lng:home.lng,r:30}];await kvSet('settings',settings);
+  computeTrips();
+  spots.forEach(s=>{const t=trips.find(t=>Math.abs(t.photos[0].lat-s.lat)<.2&&yearOf(t.start)===s.y);if(t&&(s.title||s.people.length)){notes[t.key]={title:s.title,people:s.people,acts:s.acts,notes:''}}});
+  family=[...new Set([...family,'Maman','Papa','Lina','Adam','Mamie'])];
+  await kvSet('notes',notes);await kvSet('family',family);await savePhotoTrips();
+  refresh(true);toast('Exemple chargé : cliquez sur une année ou un séjour. (☰ › Tout effacer pour repartir de zéro)',7000)}
+
+/* ============ Démarrage ============ */
+$('#addBtn').onclick=()=>$('#fileInput').click();
+$('#fileInput').onchange=e=>{const f=e.target.files;if(f.length)importFiles(f);e.target.value=''};
+$('#folderInput').onchange=e=>{const f=e.target.files;if(f.length)importFiles(f);e.target.value=''};
+$('#restoreInput').onchange=e=>{const f=e.target.files[0];if(f)restore(f);e.target.value=''};
+$('#menuBtn').onclick=e=>{e.stopPropagation();$('#menuList').classList.toggle('on')};
+document.addEventListener('click',()=>$('#menuList').classList.remove('on'));
+$('#menuList').onclick=e=>{const a=e.target.closest('button')?.dataset.a;if(!a)return;$('#menuList').classList.remove('on');
+  ({folder:()=>$('#folderInput').click(),backup,restore:()=>$('#restoreInput').click(),home:showHome,settings:showSettings,help:showHelp,demo:loadDemo,wipe}[a])()};
+$('#panelToggle').onclick=()=>{$('#panel').classList.toggle('small');setTimeout(()=>map.invalidateSize(),250)};
+window.addEventListener('resize',()=>map&&map.invalidateSize());
+
+(async()=>{
+  prepCountries();initMap();
+  try{await openDB();
+    [photos,notes,family,settings]=await Promise.all([getAll('photos'),kvGet('notes').then(v=>v||{}),kvGet('family').then(v=>v||[]),kvGet('settings').then(v=>({...settings,...(v||{})}))]);
+  }catch(e){toast('Stockage local indisponible : les données ne seront pas conservées après fermeture.',8000);db=null}
+  if(NATIVE){
+    try{const inf=await Galerie.info();thumbBase=Capacitor.convertFileSrc(inf.thumbDir.replace(/\/?$/,'/'))}catch(e){}
+    $('#addBtn').textContent='📷 Lire ma galerie';$('#addBtn').onclick=importGallery;
+    const fb=document.querySelector('#menuList [data-a="folder"]');if(fb)fb.style.display='none';
+    if(!photos.length)setTimeout(()=>{showDialog(`<h3>📷 Bienvenue !</h3><p>L'application va lire la <b>date</b> et le <b>lieu</b> de toutes les photos de votre iPhone pour dessiner vos voyages. Rien ne quitte le téléphone.</p><p>À la question d'iOS, choisissez <b>« Autoriser l'accès complet »</b>.</p><div class="row" style="justify-content:flex-end"><button class="btn" onclick="closeDialog()">Plus tard</button><button class="btn primary" id="goGal">Lire ma galerie</button></div>`);$('#goGal').onclick=()=>{closeDialog();importGallery()}},600);
+  }
+  computeTrips();refresh(true);
+})();
+</script>
+</body>
+</html>

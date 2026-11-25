@@ -1,0 +1,8 @@
+{
+  "name": "galerie-photos",
+  "version": "1.0.0",
+  "description": "Lit la date et la position des photos de la galerie iPhone (PhotoKit)",
+  "license": "MIT",
+  "author": "famille",
+  "capacitor": { "ios": { "src": "ios" } }
+}

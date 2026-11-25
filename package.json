@@ -1,0 +1,24 @@
+{
+  "name": "carte-voyages-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Carte des voyages en famille : application iPhone qui lit la galerie Photos",
+  "scripts": {
+    "build:web": "node scripts/build-web.js",
+    "sync": "npm run build:web && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "8.6.3",
+    "@capacitor/ios": "8.6.3",
+    "galerie-photos": "file:./plugins/galerie-photos"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.3",
+    "exifr": "7.1.3",
+    "i18n-iso-countries": "7.11.0",
+    "leaflet": "1.9.4",
+    "leaflet.markercluster": "1.5.3",
+    "topojson-client": "3.1.0",
+    "world-atlas": "2.0.2"
+  }
+}
